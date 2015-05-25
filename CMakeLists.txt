@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(FlatBuffers)
+#project(FlatBuffers)
+project(flatbuffers)
 
 # NOTE: Code coverage only works on Linux & OSX.
 option(FLATBUFFERS_CODE_COVERAGE "Enable the code coverage build option." OFF)
-option(FLATBUFFERS_BUILD_TESTS "Enable the build of tests and samples." ON)
+option(FLATBUFFERS_BUILD_TESTS "Enable the build of tests and samples." OFF)
 option(FLATBUFFERS_INSTALL "Enable the installation of targets." ON)
 option(FLATBUFFERS_BUILD_FLATC "Enable the build of the flatbuffers compiler" ON)
 option(FLATBUFFERS_BUILD_FLATHASH "Enable the build of flathash" ON)
@@ -14,6 +15,19 @@ if(NOT FLATBUFFERS_BUILD_FLATC AND FLATBUFFERS_BUILD_TESTS)
     "Cannot build tests without building the compiler. Tests will be disabled.")
     set(FLATBUFFERS_BUILD_TESTS OFF)
 endif()
+
+##############################################################################
+# Catkin
+##############################################################################
+
+catkin_package(
+    INCLUDE_DIRS include 
+    LIBRARIES ${PROJECT_NAME} 
+)
+
+##############################################################################
+# Build
+##############################################################################
 
 set(FlatBuffers_Compiler_SRCS
   include/flatbuffers/flatbuffers.h
@@ -73,10 +87,10 @@ set(FlatBuffers_Sample_Text_SRCS
 
 if(APPLE)
   set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++ -Wall -pedantic -Werror -Wextra")
+    "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++ -Wall -pedantic -Wextra")
 elseif(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
   set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -pedantic -Werror -Wextra")
+    "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -pedantic -Wextra") # -Werror -Wextra")
 endif()
 
 if(FLATBUFFERS_CODE_COVERAGE)
@@ -94,6 +108,10 @@ include_directories(include)
 
 if(FLATBUFFERS_BUILD_FLATC)
   add_executable(flatc ${FlatBuffers_Compiler_SRCS})
+  set_target_properties(flatc PROPERTIES
+    OUTPUT_NAME flatc
+    RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_BIN_DESTINATION} 
+  )
 endif()
 
 if(FLATBUFFERS_BUILD_FLATHASH)
@@ -122,6 +140,7 @@ endif()
 
 if(FLATBUFFERS_INSTALL)
   install(DIRECTORY include/flatbuffers DESTINATION include)
+  install(TARGETS flatc RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})
   if(FLATBUFFERS_BUILD_FLATC)
     install(TARGETS flatc DESTINATION bin)
   endif()
@@ -134,3 +153,6 @@ if(FLATBUFFERS_BUILD_TESTS)
        "${CMAKE_CURRENT_BINARY_DIR}")
   add_test(NAME flattests COMMAND flattests)
 endif()
+
+
+
